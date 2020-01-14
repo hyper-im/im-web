@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>HyperIM-WEB</title>
+  <link rel="stylesheet" href="./res/layui/css/layui.css">
+</head>
+<body>
+
+    <div style="padding: 20px; background-color: #F2F2F2;">
+        <div class="layui-row layui-col-space15" style="min-height:900px;">
+          <div class="layui-col-md8">
+            <div class="layui-card">
+              <div class="layui-card-body" style="height:800px;">
+                <div class="layui-col-md12">
+                    <div class="layui-card">
+                      <div class="layui-card-header" id="display_nickname">用户名称</div>
+                      <div class="layui-card-body chat-thread" style="height:600px;" >
+                        
+                      </div>
+                    </div>
+                  </div>
+                  <div class="layui-col-md12">
+                    <div class="layui-card">
+                      <div class="layui-card-body">
+                          <div class="layui-row layui-col-space15">
+                            <div class="layui-col-md9">
+                                <textarea placeholder="请输入聊天内容" class="layui-textarea chat-window-message"></textarea>
+                            </div>
+                            <div class="layui-col-md3">
+                                <div style="width: 216px;height:120px; margin: 0;">
+                                    <button type="button" class="layui-btn layui-btn-fluid" id="sendBtn">发送</button>
+                                  </div>
+                            </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+              </div>
+            </div>
+          </div>
+          <div class="layui-col-md4">
+            <div class="layui-card">
+              <div class="layui-card-header">在线列表</div>
+              <div class="layui-card-body" style="height:800px;">
+                <li onclick="selectTarget('user1','用户名称1')">用户名称1</li>
+                <li onclick="selectTarget('user2','用户名称2')">用户名称2</li>
+                <li onclick="selectTarget('user3','用户名称3')">用户名称3</li>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div> 
+    
+    
+    
+
+<script src="./res/layui/layui.js"></script>
+<script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+<script>
+
+function selectTarget(user_id,username)
+    {
+        $("#display_nickname").html(username);
+        target = user_id;
+    }
+
+//一般直接写在一个js文件中
+layui.use(['layer', 'form','jquery'], function(){
+  var layer = layui.layer
+  ,form = layui.form
+  ,$ = layui.jquery;
+
+  var target = '';
+  
+  url = localStorage.getItem("hyperim_server_ip") + ":" + localStorage.getItem("hyperim_server_port");
+  ws = new WebSocket('ws://'+url+'/im',localStorage.getItem("hyperim_token")); 
+  ws.onopen = function(){
+         console.log("已经打开了websocket连接，可以进行实时通信了");
+         ws.send('{"action":"login"}');
+         console.log("进行实时通信了");
+     };
+     ws.onmessage=function (evt) {
+        console.log('evt___111');
+        console.log(evt);
+        console.log('evt___222');
+         //添加内容
+         $(".chat-thread").append("<li>"+evt.data+"</li>");
+
+         //滚动条下移到最后
+         $(".chat-thread").scrollTop($('.chat-thread')[0].scrollHeight);
+         console.log("接受到来自服务器端的数据:"+evt.data);
+     }
+     ws.onclose = function(e){
+        // alert('服务器关闭');
+     }
+
+     $("body").on("click","#sendBtn",function(){
+        var message = $(".chat-window-message").val();
+        ws.send('{"action":"chat_broadcast","target_url":"'+target+'","data":'+message+'}');
+
+			 // alert(target);
+			// ws.send(name+':'+speak); //消息发送到服务器
+
+             $('.chat-window-message').val(''); //清除文本框内容
+    });
+
+    
+
+
+  $(function(){
+    var user_id = localStorage.getItem("hyperim_user_id");
+    var username = localStorage.getItem("hyperim_username");
+      if(user_id == null || username == null)
+      {
+          window.location.href = "./login.html";
+      }
+
+  })
+  
+    
+});
+</script> 
+</body>
+</html>
